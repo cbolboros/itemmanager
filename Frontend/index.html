@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0-beta/css/materialize.min.css">
+    <title>Item Manager</title>
+</head>
+
+<body>
+    <nav>
+        <div class="nav-wrapper">
+            <div class="container">
+                <a href="#" class="brand-logo center">Item Manager</a>
+                <ul id="nav-mobile" class="left hide-on-med-and-down">
+                    <li>
+                        <a href="index.html">Home</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h3>Add Item</h3>
+
+        <form id="itemForm">
+            <div class="row">
+                <div class="input-field col s12">
+                    <input id="text" type="text" class="validate">
+                    <label for="text">Item Name</label>
+                </div>
+            </div>
+            <div class="row">
+                <div class="input-field col s12">
+                    <textarea id="body" class="materialize-textarea"></textarea>
+                    <label for="body">Item Body</label>
+                </div>
+            </div>
+            <button class="btn waves-effect waves-light blue white-text" type="submit" name="action">Submit
+            </button>
+        </form>
+
+        <ul id="items" class="collection">
+        </ul>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0-beta/js/materialize.min.js"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            getItems();
+
+            $('#itemForm').on('submit', function (e) {
+                e.preventDefault;
+
+                let text = $('#text').val();
+                let body = $('#body').val();
+
+                addItem(text, body);
+            });
+
+            function addItem(text, body) {
+                $.ajax({
+                    method: 'POST',
+                    url: 'http://itemapi.io/api/items',
+                    data: {
+                        text: text,
+                        body: body
+                    }
+                }).done(function (item) {
+                    alert('Item # ' + item.id + ' added');
+                    location.reload();
+                });
+            }
+
+            $('body').on('click', '.deleteLink', function (e) {
+                e.preventDefault;
+                let id = $(this).data('id');
+                deleteItem(id);
+            });
+
+
+            function deleteItem(id) {
+                $.ajax({
+                    method: 'POST',
+                    url: 'http://itemapi.io/api/items/' + id,
+                    data: {
+                        _method: 'DELETE'
+                    }
+                }).done(function (item) {
+
+                    alert('Item removed');
+                    location.reload();
+                });
+            }
+
+
+            $('body').on('click', '.editLink', function (e) {
+
+                $(this).hide();
+                $(this).siblings('.updateLink').show();
+                $(this).parent().siblings('.text').hide();
+                $(this).parent().siblings('.body').hide();
+                $(this).parent().siblings('.editText').show();
+                $(this).parent().siblings('.editBody').show();
+        
+            });
+
+             $('body').on('click', '.updateLink', function (e) {
+                e.preventDefault;
+
+                let id = $(this).data('id');
+                let editText = $(this).parent().siblings('.editText').children().val();
+                let editBody = $(this).parent().siblings('.editBody').children().val();
+
+                updateItem(id, editText, editBody);
+             });
+
+            function updateItem(id, text, body) {
+                $.ajax({
+                    method: 'POST',
+                    url: 'http://itemapi.io/api/items/' + id,
+                    data: {
+                        text: text,
+                        body: body,
+                        _method: 'PUT'
+                    }
+                }).done(function (item) {
+                    alert('Item # ' + item.id + ' edited');
+                    location.reload();
+                });
+            }
+
+            function getItems() {
+                $.ajax({
+                    url: 'http://itemapi.io/api/items'
+                }).done(function (items) {
+                    let output = '';
+                    $.each(items, function (key, item) {
+                        output +=
+                            `
+                            <li class="collection-item">
+                                <div class="input-field col l3 s12 editText" style="display:none;">
+                                    <input type="text" class="validate newText">
+                                </div>           
+                                <div class="input-field col l3 s12 editBody" style="display:none;">
+                                    <textarea class="materialize-textarea newBody"></textarea>
+                                </div>
+                                <p class="text"><strong>${item.text}</strong></p>
+                                <p class="body">${item.body}</p>
+                                <div class="controls">
+                                    <a href="#" class="editLink" data-id="${item.id}" data-text="${item.text}" data-body="${item.body}">Edit</a>
+                                    <a href="#" class="updateLink" data-id="${item.id}");" style="display:none;">Update</a> 
+                                    <a href="#" class="deleteLink" data-id="${item.id}">Delete</a>
+                                </div>
+                            </li>
+                        `;
+                    });
+                    $('#items').append(output);
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>
